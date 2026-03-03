@@ -1,21 +1,28 @@
 import { NextResponse } from 'next/server';
 import db from '@/lib/db';
+import { logAction } from '@/lib/logger';
 
 export async function GET() {
-  const customers = db.prepare('SELECT * FROM customers ORDER BY created_at DESC').all();
-  return NextResponse.json(customers);
+  try {
+    const customers = db.prepare('SELECT * FROM customers ORDER BY created_at DESC').all();
+    return NextResponse.json(customers);
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to fetch customers' }, { status: 500 });
+  }
 }
 
 export async function POST(request: Request) {
-  const { name, contact, userId } = await request.json();
-  const result = db.prepare('INSERT INTO customers (name, contact) VALUES (?, ?)').run(name, contact);
-  
-  // Log the action (Gate Layer requirement)
-  db.prepare('INSERT INTO logs (user_id, action, details) VALUES (?, ?, ?)').run(
-    userId, 
-    'CREATE_CUSTOMER', 
-    `Created customer: ${name} (ID: ${result.lastInsertRowid})`
-  );
-
-  return NextResponse.json({ id: result.lastInsertRowid });
+  try {
+    const { name, contact, userId } = await request.json();
+    
+    const result = db.prepare('INSERT INTO customers (name, contact) VALUES (?, ?)').run(name, contact);
+    
+    if (userId) {
+      await logAction(userId, 'CREATE_CUSTOMER', `Created customer: ${name}`);
+    }
+    
+    return NextResponse.json({ id: result.lastInsertRowid, name, contact });
+  } catch (error) {
+    return NextResponse.json({ error: 'Failed to create customer' }, { status: 500 });
+  }
 }
