@@ -1,12 +1,17 @@
 import Database from 'better-sqlite3';
+import path from 'path';
+import { APP_CONFIG } from './config';
 
-const db = new Database('toyota_diagnostic.db');
+const dbPath = path.join(process.cwd(), APP_CONFIG.DB_NAME);
+const db = new Database(dbPath);
 
+// Initialize Database Schema
 export function initDb() {
   db.exec(`
     CREATE TABLE IF NOT EXISTS roles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      name TEXT UNIQUE
+      name TEXT UNIQUE,
+      permissions TEXT
     );
 
     CREATE TABLE IF NOT EXISTS users (
@@ -17,33 +22,38 @@ export function initDb() {
       FOREIGN KEY (role_id) REFERENCES roles(id)
     );
 
-    CREATE TABLE IF NOT EXISTS logs (
-      id INTEGER PRIMARY KEY AUTOINCREMENT,
-      user_id INTEGER,
-      action TEXT,
-      details TEXT,
-      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
-      FOREIGN KEY (user_id) REFERENCES users(id)
-    );
-
     CREATE TABLE IF NOT EXISTS customers (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
-      phone TEXT,
-      email TEXT,
-      address TEXT,
+      contact TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP
     );
 
     CREATE TABLE IF NOT EXISTS vehicles (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
-      customer_id INTEGER,
       vin TEXT UNIQUE,
       license_plate TEXT,
-      model TEXT,
-      year INTEGER,
-      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      customer_id INTEGER,
       FOREIGN KEY (customer_id) REFERENCES customers(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS service_history (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vehicle_id INTEGER,
+      date DATETIME DEFAULT CURRENT_TIMESTAMP,
+      details TEXT,
+      branch_id TEXT,
+      FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS logs (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      action TEXT,
+      user_id INTEGER,
+      details TEXT,
+      timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
+      ip_address TEXT,
+      FOREIGN KEY (user_id) REFERENCES users(id)
     );
 
     CREATE TABLE IF NOT EXISTS feedback (
@@ -65,9 +75,9 @@ export function initDb() {
     CREATE TABLE IF NOT EXISTS diagnostic_reports (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vehicle_id INTEGER,
-      category TEXT,
+      category TEXT, -- Engine, Electrical, Brake, etc.
       data JSON,
-      severity TEXT,
+      severity TEXT, -- Critical, Warning, Info
       recommendation TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
@@ -76,7 +86,7 @@ export function initDb() {
     CREATE TABLE IF NOT EXISTS customizations (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vehicle_id INTEGER,
-      feature TEXT,
+      feature TEXT, -- Lighting, Locking, Alerts
       value TEXT,
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
@@ -88,7 +98,7 @@ export function initDb() {
       vehicle_id INTEGER,
       appointment_date DATE,
       time_slot TEXT,
-      status TEXT DEFAULT 'PENDING',
+      status TEXT DEFAULT 'PENDING', -- PENDING, CONFIRMED, COMPLETED, CANCELLED
       service_type TEXT,
       notes TEXT,
       created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
@@ -111,7 +121,7 @@ export function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vehicle_id INTEGER,
       appointment_id INTEGER,
-      status TEXT DEFAULT 'WAITING',
+      status TEXT DEFAULT 'WAITING', -- WAITING, IN_PROGRESS, TESTING, READY
       bay_id TEXT,
       technician_name TEXT,
       start_time DATETIME,
@@ -123,7 +133,7 @@ export function initDb() {
     CREATE TABLE IF NOT EXISTS obd_devices (
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       name TEXT,
-      type TEXT,
+      type TEXT, -- USB, BLUETOOTH, WIFI, CLOUD
       connection_string TEXT,
       status TEXT DEFAULT 'DISCONNECTED',
       last_seen DATETIME,
@@ -142,21 +152,19 @@ export function initDb() {
   `);
 
   // Seed Roles
-  const rolesCount = db.prepare('SELECT COUNT(*) as count FROM roles').get() as any;
+  const rolesCount = db.prepare('SELECT count(*) as count FROM roles').get() as { count: number };
   if (rolesCount.count === 0) {
-    const insertRole = db.prepare('INSERT INTO roles (name) VALUES (?)');
-    insertRole.run('Admin');
-    insertRole.run('Staff');
-    insertRole.run('Auditor');
+    db.prepare('INSERT INTO roles (name, permissions) VALUES (?, ?)').run(APP_CONFIG.ROLES.ADMIN, APP_CONFIG.PERMISSIONS.ADMIN);
+    db.prepare('INSERT INTO roles (name, permissions) VALUES (?, ?)').run(APP_CONFIG.ROLES.STAFF, APP_CONFIG.PERMISSIONS.STAFF);
+    db.prepare('INSERT INTO roles (name, permissions) VALUES (?, ?)').run(APP_CONFIG.ROLES.AUDITOR, APP_CONFIG.PERMISSIONS.AUDITOR);
   }
 
   // Seed Users
-  const usersCount = db.prepare('SELECT COUNT(*) as count FROM users').get() as any;
+  const usersCount = db.prepare('SELECT count(*) as count FROM users').get() as { count: number };
   if (usersCount.count === 0) {
-    const insertUser = db.prepare('INSERT INTO users (username, password, role_id) VALUES (?, ?, ?)');
-    insertUser.run('admin', 'password123', 1);
-    insertUser.run('staff', 'password123', 2);
-    insertUser.run('auditor', 'password123', 3);
+    db.prepare('INSERT INTO users (username, password, role_id) VALUES (?, ?, ?)').run('admin', 'password123', 1);
+    db.prepare('INSERT INTO users (username, password, role_id) VALUES (?, ?, ?)').run('staff', 'password123', 2);
+    db.prepare('INSERT INTO users (username, password, role_id) VALUES (?, ?, ?)').run('auditor', 'password123', 3);
   }
 }
 
