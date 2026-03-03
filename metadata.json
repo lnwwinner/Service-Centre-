@@ -1,0 +1,5 @@
+{
+  "name": "Toyota Diagnostic Pro (TDP) - ระบบศูนย์บริการรถยนต์",
+  "description": "ระบบจัดการศูนย์บริการรถยนต์และวินิจฉัยปัญหา OBD/CAN Bus ครบวงจร (Phase 1)",
+  "requestFramePermissions": []
+}
