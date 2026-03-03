@@ -11,7 +11,8 @@ import {
   TrendingUp, 
   AlertCircle,
   Clock,
-  CheckCircle2
+  CheckCircle2,
+  Calendar
 } from 'lucide-react';
 import { 
   AreaChart, 
