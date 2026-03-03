@@ -13,6 +13,9 @@ import {
   LogOut,
   Settings,
   Activity,
+  Calendar,
+  ListOrdered,
+  Package,
   Bell,
   Search,
   Menu,
@@ -71,6 +74,9 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
 
   const menuItems = [
     { id: 'dashboard', label: 'แผงควบคุม', icon: LayoutDashboard, path: '/', roles: ['Admin', 'Staff'] },
+    { id: 'appointments', label: 'นัดหมายลูกค้า', icon: Calendar, path: '/appointments', roles: ['Admin', 'Staff'] },
+    { id: 'queue', label: 'คิวงานซ่อม', icon: ListOrdered, path: '/queue', roles: ['Admin', 'Staff'] },
+    { id: 'inventory', label: 'คลังอะไหล่', icon: Package, path: '/inventory', roles: ['Admin', 'Staff'] },
     { id: 'customers', label: 'ลูกค้า', icon: Users, path: '/customers', roles: ['Admin', 'Staff'] },
     { id: 'vehicles', label: 'ข้อมูลรถยนต์', icon: Car, path: '/vehicles', roles: ['Admin', 'Staff'] },
     { id: 'diagnostics', label: 'วินิจฉัยระบบ', icon: Activity, path: '/diagnostics', roles: ['Admin', 'Staff'] },

@@ -91,6 +91,44 @@ export function initDb() {
       updated_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
     );
+
+    CREATE TABLE IF NOT EXISTS appointments (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      customer_id INTEGER,
+      vehicle_id INTEGER,
+      appointment_date DATE,
+      time_slot TEXT,
+      status TEXT DEFAULT 'PENDING', -- PENDING, CONFIRMED, COMPLETED, CANCELLED
+      service_type TEXT,
+      notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (customer_id) REFERENCES customers(id),
+      FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+    );
+
+    CREATE TABLE IF NOT EXISTS inventory (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      part_name TEXT,
+      sku TEXT UNIQUE,
+      quantity INTEGER DEFAULT 0,
+      threshold INTEGER DEFAULT 5,
+      price REAL,
+      category TEXT,
+      updated_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS job_queue (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vehicle_id INTEGER,
+      appointment_id INTEGER,
+      status TEXT DEFAULT 'WAITING', -- WAITING, IN_PROGRESS, TESTING, READY
+      bay_id TEXT,
+      technician_name TEXT,
+      start_time DATETIME,
+      end_time DATETIME,
+      FOREIGN KEY (vehicle_id) REFERENCES vehicles(id),
+      FOREIGN KEY (appointment_id) REFERENCES appointments(id)
+    );
   `);
 
   // Seed Roles
