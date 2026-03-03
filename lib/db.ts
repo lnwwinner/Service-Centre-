@@ -149,6 +149,15 @@ export function initDb() {
       timestamp DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (device_id) REFERENCES obd_devices(id)
     );
+
+    CREATE TABLE IF NOT EXISTS immobilizer_keys (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      vehicle_id INTEGER,
+      key_id TEXT,
+      status TEXT DEFAULT 'ACTIVE',
+      registered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
+      FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
+    );
   `);
 
   // Seed Roles

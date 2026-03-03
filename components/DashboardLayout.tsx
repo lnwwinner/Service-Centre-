@@ -82,9 +82,11 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { id: 'vehicles', label: 'ข้อมูลรถยนต์', icon: Car, path: '/vehicles', roles: ['Admin', 'Staff'] },
     { id: 'diagnostics', label: 'วินิจฉัยระบบ', icon: Activity, path: '/diagnostics', roles: ['Admin', 'Staff'] },
     { id: 'obd', label: 'OBD Integration', icon: Cpu, path: '/obd', roles: ['Admin', 'Staff'] },
-    { id: 'customizations', label: 'ปรับแต่งอุปกรณ์', icon: Settings, path: '/customizations', roles: ['Admin', 'Staff'] },
+    { id: 'customizations', label: 'Device & Customization', icon: Settings, path: '/customizations', roles: ['Admin', 'Staff'] },
     { id: 'services', label: 'ประวัติการซ่อม', icon: History, path: '/services', roles: ['Admin', 'Staff'] },
+    { id: 'monitoring', label: 'Monitoring', icon: Activity, path: '/monitoring', roles: ['Admin'] },
     { id: 'logs', label: 'Audit Logs', icon: ShieldCheck, path: '/logs', roles: ['Admin', 'Auditor'] },
+    { id: 'settings', label: 'Settings', icon: Settings, path: '/settings', roles: ['Admin'] },
     { id: 'feedback', label: 'คำติชม', icon: MessageSquare, path: '/feedback', roles: ['Admin', 'Staff'] },
   ];
 
