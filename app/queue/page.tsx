@@ -21,16 +21,16 @@ export default function QueuePage() {
   const [loading, setLoading] = useState(true);
   const [viewMode, setViewMode] = useState<'grid' | 'list'>('grid');
 
-  useEffect(() => {
-    fetchQueue();
-  }, []);
-
   const fetchQueue = async () => {
     const res = await fetch('/api/queue');
     const data = await res.json();
     setQueue(data);
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchQueue();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {

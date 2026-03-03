@@ -1,15 +1,24 @@
-import type {Metadata} from 'next';
-import './globals.css'; // Global styles
+import './globals.css';
+import { Inter, JetBrains_Mono } from 'next/font/google';
 
-export const metadata: Metadata = {
-  title: 'My Google AI Studio App',
-  description: 'My Google AI Studio App',
+const inter = Inter({ subsets: ['latin'], variable: '--font-sans' });
+const jetbrainsMono = JetBrains_Mono({ subsets: ['latin'], variable: '--font-mono' });
+
+export const metadata = {
+  title: 'Toyota Diagnostic Pro',
+  description: 'Advanced Vehicle Diagnostic System',
 };
 
-export default function RootLayout({children}: {children: React.ReactNode}) {
+export default function RootLayout({
+  children,
+}: {
+  children: React.ReactNode;
+}) {
   return (
     <html lang="en">
-      <body suppressHydrationWarning>{children}</body>
+      <body className={`${inter.variable} ${jetbrainsMono.variable} font-sans`}>
+        {children}
+      </body>
     </html>
   );
 }

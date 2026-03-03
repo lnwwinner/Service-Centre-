@@ -19,16 +19,16 @@ export default function AppointmentsPage() {
   const [appointments, setAppointments] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchAppointments();
-  }, []);
-
   const fetchAppointments = async () => {
     const res = await fetch('/api/appointments');
     const data = await res.json();
     setAppointments(data);
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchAppointments();
+  }, []);
 
   const getStatusColor = (status: string) => {
     switch (status) {

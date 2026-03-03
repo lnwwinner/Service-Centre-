@@ -19,16 +19,16 @@ export default function InventoryPage() {
   const [inventory, setInventory] = useState<any[]>([]);
   const [loading, setLoading] = useState(true);
 
-  useEffect(() => {
-    fetchInventory();
-  }, []);
-
   const fetchInventory = async () => {
     const res = await fetch('/api/inventory');
     const data = await res.json();
     setInventory(data);
     setLoading(false);
   };
+
+  useEffect(() => {
+    fetchInventory();
+  }, []);
 
   return (
     <DashboardLayout>
