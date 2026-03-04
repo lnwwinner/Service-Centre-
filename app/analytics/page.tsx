@@ -5,7 +5,7 @@ import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
 import { BarChart3, TrendingUp, Users, Package, Sparkles, RefreshCw } from 'lucide-react';
 import { GoogleGenAI } from "@google/genai";
-import { BarChart, Bar, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from 'recharts';
+import { BarChart, Bar, XAxis, YAxis, CartesianGrid, ResponsiveContainer } from 'recharts';
 
 export default function AnalyticsPage() {
   const [loading, setLoading] = useState(false);
@@ -100,10 +100,6 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                    cursor={{fill: '#f8fafc'}}
-                  />
                   <Bar dataKey="revenue" fill="#4f46e5" radius={[6, 6, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>
@@ -121,10 +117,6 @@ export default function AnalyticsPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#f1f5f9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#64748b', fontSize: 12}} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '12px', border: 'none', boxShadow: '0 4px 6px -1px rgb(0 0 0 / 0.1)'}}
-                    cursor={{fill: '#f8fafc'}}
-                  />
                   <Bar dataKey="services" fill="#0ea5e9" radius={[6, 6, 0, 0]} barSize={40} />
                 </BarChart>
               </ResponsiveContainer>

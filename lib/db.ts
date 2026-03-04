@@ -45,6 +45,7 @@ export function initDb() {
       vehicle_id INTEGER,
       date DATETIME DEFAULT CURRENT_TIMESTAMP,
       details TEXT,
+      service_details TEXT,
       branch_id TEXT,
       FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
     );
@@ -167,6 +168,7 @@ export function initDb() {
   try { db.prepare("ALTER TABLE vehicles ADD COLUMN model TEXT").run(); } catch (e) {}
   try { db.prepare("ALTER TABLE vehicles ADD COLUMN year INTEGER").run(); } catch (e) {}
   try { db.prepare("ALTER TABLE vehicles ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP").run(); } catch (e) {}
+  try { db.prepare("ALTER TABLE service_history ADD COLUMN service_details TEXT").run(); } catch (e) {}
 
   // Seed Roles
   const rolesCount = db.prepare('SELECT count(*) as count FROM roles').get() as { count: number };

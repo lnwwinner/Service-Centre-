@@ -20,7 +20,6 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
 
@@ -150,9 +149,6 @@ export default function MonitoringPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                   <XAxis dataKey="time" hide />
                   <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'}}
-                  />
                   <Line type="monotone" dataKey="cpu" stroke="#3B82F6" strokeWidth={3} dot={false} />
                   <Line type="monotone" dataKey="memory" stroke="#A855F7" strokeWidth={3} dot={false} />
                 </LineChart>

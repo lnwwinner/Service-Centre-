@@ -20,7 +20,6 @@ import {
   XAxis, 
   YAxis, 
   CartesianGrid, 
-  Tooltip, 
   ResponsiveContainer 
 } from 'recharts';
 
@@ -128,9 +127,6 @@ export default function DashboardPage() {
                   <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
                   <XAxis dataKey="name" axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} dy={10} />
                   <YAxis axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
-                  <Tooltip 
-                    contentStyle={{borderRadius: '16px', border: 'none', boxShadow: '0 10px 30px -10px rgba(0,0,0,0.1)'}}
-                  />
                   <Area type="monotone" dataKey="revenue" stroke="#DC2626" strokeWidth={3} fillOpacity={1} fill="url(#colorRevenue)" />
                 </AreaChart>
               </ResponsiveContainer>
