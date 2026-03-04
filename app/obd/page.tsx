@@ -3,79 +3,50 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
-import { 
-  Wifi, 
-  Bluetooth, 
-  Usb, 
-  Cloud, 
-  RefreshCw, 
-  Plus, 
-  Terminal, 
-  Activity,
-  CheckCircle2,
-  XCircle,
-  Cpu
-} from 'lucide-react';
+import { Cpu, Wifi, Bluetooth, Usb, Cloud, Plus, RefreshCw, CheckCircle2 } from 'lucide-react';
+import AiDeviceOptimizer from '@/components/AiDeviceOptimizer';
+
+interface Device {
+  id: number;
+  name: string;
+  type: string;
+  status: string;
+  last_seen: string;
+}
 
 export default function OBDIntegrationPage() {
-  const [devices, setDevices] = useState<any[]>([]);
-  const [scanning, setScanning] = useState(false);
-  const [activeDevice, setActiveDevice] = useState<any>(null);
-  const [logs, setLogs] = useState<string[]>([]);
+  const [devices, setDevices] = useState<Device[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [isModalOpen, setIsModalOpen] = useState(false);
+  
+  // Form
+  const [name, setName] = useState('');
+  const [type, setType] = useState('BLUETOOTH');
+  const [connectionString, setConnectionString] = useState('');
+
+  const fetchDevices = async () => {
+    const res = await fetch('/api/obd/devices');
+    setDevices(await res.json());
+    setLoading(false);
+  };
 
   useEffect(() => {
     fetchDevices();
   }, []);
 
-  const fetchDevices = async () => {
-    const res = await fetch('/api/obd/devices');
-    const data = await res.json();
-    setDevices(data);
-  };
+  const handleRegister = async (e: React.FormEvent) => {
+    e.preventDefault();
+    const session = document.cookie.split('; ').find(row => row.startsWith('user_session='));
+    const userData = JSON.parse(decodeURIComponent(session?.split('=')[1] || '{}'));
 
-  const simulateScan = () => {
-    setScanning(true);
-    setTimeout(() => {
-      setScanning(false);
-      // Simulate finding a new device
-      const types = ['BLUETOOTH', 'WIFI', 'USB'];
-      const randomType = types[Math.floor(Math.random() * types.length)];
-      addLog(`Detected new ${randomType} device: OBD-II Scanner (${Math.random().toString(36).substring(7)})`);
-    }, 3000);
-  };
-
-  const connectDevice = async (device: any) => {
-    addLog(`Attempting to connect to ${device.name} via ${device.type}...`);
+    await fetch('/api/obd/devices', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ name, type, connection_string: connectionString, userId: userData.id }),
+    });
     
-    // Simulate connection delay
-    setTimeout(async () => {
-      await fetch('/api/obd/devices', {
-        method: 'PATCH',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ id: device.id, status: 'CONNECTED', userId: 1 }) // Mock User ID
-      });
-      
-      setActiveDevice(device);
-      addLog(`Successfully connected to ${device.name}`);
-      fetchDevices();
-      startDataStream();
-    }, 1500);
-  };
-
-  const startDataStream = () => {
-    const interval = setInterval(() => {
-      const rpm = Math.floor(Math.random() * (3000 - 800) + 800);
-      const speed = Math.floor(Math.random() * 120);
-      const temp = Math.floor(Math.random() * (110 - 80) + 80);
-      addLog(`[DATA STREAM] RPM: ${rpm} | Speed: ${speed}km/h | Temp: ${temp}°C`);
-    }, 2000);
-    
-    // Clear interval on unmount or disconnect (simplified for demo)
-    return () => clearInterval(interval);
-  };
-
-  const addLog = (message: string) => {
-    setLogs(prev => [`[${new Date().toLocaleTimeString()}] ${message}`, ...prev].slice(0, 50));
+    setIsModalOpen(false);
+    fetchDevices();
   };
 
   const getIcon = (type: string) => {
@@ -91,120 +62,118 @@ export default function OBDIntegrationPage() {
   return (
     <DashboardLayout>
       <div className="space-y-8">
-        <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+        <div className="flex justify-between items-center">
           <div>
-            <h1 className="text-2xl font-bold tracking-tight">OBD Scan Integration</h1>
-            <p className="text-slate-500 text-sm mt-1">จัดการการเชื่อมต่ออุปกรณ์ OBD-II หลายรูปแบบ (USB, Bluetooth, Wi-Fi, Cloud)</p>
+            <h1 className="text-2xl font-bold tracking-tight">OBD Integration & Device Management</h1>
+            <p className="text-slate-500 text-sm mt-1">Manage diagnostic tools and connectivity</p>
           </div>
           <button 
-            onClick={simulateScan}
-            disabled={scanning}
-            className="bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all flex items-center gap-2 shadow-lg shadow-slate-900/20 disabled:opacity-50"
+            onClick={() => setIsModalOpen(true)}
+            className="flex items-center gap-2 bg-slate-900 text-white px-6 py-3 rounded-2xl font-bold text-sm hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
           >
-            {scanning ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Plus className="w-4 h-4" />}
-            {scanning ? 'Scanning...' : 'Scan for Devices'}
+            <Plus className="w-5 h-5" />
+            Register Device
           </button>
         </div>
 
-        <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
-          {/* Device List */}
-          <div className="lg:col-span-2 space-y-6">
-            <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
-              <h3 className="font-bold mb-4 flex items-center gap-2">
-                <Cpu className="w-5 h-5 text-blue-600" />
-                Available Devices
-              </h3>
-              <div className="space-y-4">
-                {devices.length === 0 ? (
-                  <div className="text-center py-10 text-slate-400">
-                    <p>No devices found. Click scan to detect.</p>
-                    {/* Mock devices for demo if empty */}
-                    <button 
-                      onClick={() => setDevices([
-                        { id: 1, name: 'Vgate iCar Pro', type: 'BLUETOOTH', status: 'DISCONNECTED' },
-                        { id: 2, name: 'OBDLink EX', type: 'USB', status: 'DISCONNECTED' },
-                        { id: 3, name: 'Cloud Gateway #882', type: 'CLOUD', status: 'CONNECTED' },
-                      ])}
-                      className="text-xs text-blue-500 underline mt-2"
-                    >
-                      Load Demo Devices
-                    </button>
-                  </div>
-                ) : (
-                  devices.map((device) => (
-                    <div key={device.id} className="flex items-center justify-between p-4 bg-slate-50 rounded-2xl border border-slate-100">
-                      <div className="flex items-center gap-4">
-                        <div className={`w-12 h-12 rounded-xl flex items-center justify-center ${
-                          device.status === 'CONNECTED' ? 'bg-emerald-100 text-emerald-600' : 'bg-white text-slate-400 border border-slate-200'
-                        }`}>
-                          {getIcon(device.type)}
-                        </div>
-                        <div>
-                          <p className="font-bold text-sm">{device.name}</p>
-                          <p className="text-xs text-slate-400 font-mono">{device.type} • {device.status}</p>
-                        </div>
-                      </div>
-                      <button
-                        onClick={() => connectDevice(device)}
-                        disabled={device.status === 'CONNECTED'}
-                        className={`px-4 py-2 rounded-xl text-xs font-bold transition-all ${
-                          device.status === 'CONNECTED' 
-                            ? 'bg-emerald-100 text-emerald-700 cursor-default' 
-                            : 'bg-slate-900 text-white hover:bg-slate-800'
-                        }`}
-                      >
-                        {device.status === 'CONNECTED' ? 'Active' : 'Connect'}
-                      </button>
-                    </div>
-                  ))
-                )}
-              </div>
-            </div>
+        <AiDeviceOptimizer />
 
-            {/* Connection Topology */}
-            <div className="bg-slate-900 text-white p-8 rounded-[32px] relative overflow-hidden min-h-[200px] flex items-center justify-center">
-              <div className="text-center z-10">
-                <Cloud className="w-16 h-16 mx-auto mb-4 text-blue-400 opacity-80" />
-                <h3 className="font-bold text-lg">Cloud OBD Gateway</h3>
-                <p className="text-slate-400 text-sm mt-2 max-w-md">
-                  ระบบรองรับการเชื่อมต่อแบบ Hybrid: ข้อมูลจาก USB/Bluetooth จะถูกส่งผ่าน Gateway ขึ้น Cloud เพื่อประมวลผลและบันทึกลง Immutable Logs
-                </p>
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {devices.map((device) => (
+            <div key={device.id} className="bg-white p-6 rounded-[28px] border border-slate-200 shadow-sm relative overflow-hidden group">
+              <div className="absolute top-0 right-0 p-6 opacity-10 group-hover:opacity-20 transition-opacity">
+                {getIcon(device.type)}
               </div>
-              <div className="absolute inset-0 bg-gradient-to-br from-blue-900/20 to-purple-900/20"></div>
-            </div>
-          </div>
-
-          {/* Live Terminal */}
-          <div className="bg-[#1E1E1E] p-6 rounded-[32px] border border-slate-800 font-mono text-xs flex flex-col h-[600px]">
-            <div className="flex items-center justify-between mb-4 pb-4 border-b border-slate-700">
-              <div className="flex items-center gap-2 text-slate-300">
-                <Terminal className="w-4 h-4" />
-                <span className="font-bold">OBD Stream Log</span>
+              <div className="flex items-center gap-4 mb-4">
+                <div className={`p-3 rounded-2xl ${
+                  device.status === 'CONNECTED' ? 'bg-emerald-50 text-emerald-600' : 'bg-slate-50 text-slate-400'
+                }`}>
+                  {getIcon(device.type)}
+                </div>
+                <div>
+                  <h3 className="font-bold text-slate-900">{device.name}</h3>
+                  <p className="text-xs text-slate-500">{device.type}</p>
+                </div>
               </div>
-              <div className="flex gap-1">
-                <div className="w-2 h-2 rounded-full bg-red-500"></div>
-                <div className="w-2 h-2 rounded-full bg-yellow-500"></div>
-                <div className="w-2 h-2 rounded-full bg-emerald-500"></div>
+              <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
+                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                  device.status === 'CONNECTED' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                }`}>
+                  {device.status}
+                </span>
+                <span className="text-xs text-slate-400">
+                  Last seen: {new Date(device.last_seen).toLocaleTimeString()}
+                </span>
               </div>
             </div>
-            <div className="flex-1 overflow-y-auto space-y-2 scrollbar-hide">
-              {logs.length === 0 && <p className="text-slate-600 italic">Waiting for connection...</p>}
-              {logs.map((log, i) => (
-                <p key={i} className="text-emerald-400 break-all border-l-2 border-slate-700 pl-2">
-                  {log}
-                </p>
-              ))}
-            </div>
-            <div className="mt-4 pt-4 border-t border-slate-700">
-              <input 
-                type="text" 
-                placeholder="> Send AT Command..." 
-                className="w-full bg-slate-800 border border-slate-700 rounded-xl px-4 py-2 text-slate-300 outline-none focus:border-emerald-500 transition-colors"
-              />
-            </div>
-          </div>
+          ))}
         </div>
       </div>
+
+      {/* Register Modal */}
+      {isModalOpen && (
+        <div className="fixed inset-0 bg-black/60 backdrop-blur-sm z-[100] flex items-center justify-center p-4">
+          <motion.div 
+            initial={{ opacity: 0, scale: 0.9 }}
+            animate={{ opacity: 1, scale: 1 }}
+            className="bg-white w-full max-w-lg rounded-[32px] p-10 shadow-2xl"
+          >
+            <h2 className="text-2xl font-bold mb-6">Register OBD Device</h2>
+            <form onSubmit={handleRegister} className="space-y-6">
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Device Name</label>
+                <input 
+                  type="text" 
+                  value={name}
+                  onChange={(e) => setName(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="Scanner A1"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Connection Type</label>
+                <select 
+                  value={type}
+                  onChange={(e) => setType(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20"
+                >
+                  <option value="BLUETOOTH">Bluetooth</option>
+                  <option value="WIFI">Wi-Fi</option>
+                  <option value="USB">USB</option>
+                  <option value="CLOUD">Cloud Gateway</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">Connection String / MAC / IP</label>
+                <input 
+                  type="text" 
+                  value={connectionString}
+                  onChange={(e) => setConnectionString(e.target.value)}
+                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-blue-500/20"
+                  placeholder="00:11:22:33:44:55"
+                  required
+                />
+              </div>
+              <div className="flex gap-4 pt-4">
+                <button 
+                  type="button"
+                  onClick={() => setIsModalOpen(false)}
+                  className="flex-1 py-4 bg-slate-100 text-slate-600 font-bold rounded-2xl hover:bg-slate-200 transition-all"
+                >
+                  Cancel
+                </button>
+                <button 
+                  type="submit"
+                  className="flex-1 py-4 bg-slate-900 text-white font-bold rounded-2xl hover:bg-slate-800 transition-all shadow-lg shadow-slate-900/20"
+                >
+                  Register
+                </button>
+              </div>
+            </form>
+          </motion.div>
+        </div>
+      )}
     </DashboardLayout>
   );
 }

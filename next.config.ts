@@ -16,6 +16,7 @@ const nextConfig: NextConfig = {
       allowedOrigins: ["*"],
     },
   },
+  // Force rebuild
 };
 
 export default nextConfig;
