@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
 import { Package, Search, Plus, AlertCircle, Tag, DollarSign, Archive } from 'lucide-react';
@@ -27,15 +27,15 @@ export default function InventoryPage() {
   const [price, setPrice] = useState('');
   const [category, setCategory] = useState('');
 
-  const fetchInventory = async () => {
+  const fetchInventory = useCallback(async () => {
     const res = await fetch('/api/inventory');
     setInventory(await res.json());
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchInventory();
-  }, []);
+  }, [fetchInventory]);
 
   const handleAdd = async (e: React.FormEvent) => {
     e.preventDefault();

@@ -1,7 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
-import { useRouter } from 'next/navigation';
+import { useRouter, usePathname } from 'next/navigation';
 import { motion } from 'motion/react';
 import { 
   LayoutDashboard, 
@@ -22,7 +22,9 @@ import {
   X,
   Cpu,
   Bot,
-  TrendingUp
+  TrendingUp,
+  Terminal,
+  ShoppingBag
 } from 'lucide-react';
 
 interface User {
@@ -36,6 +38,7 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
   const [loading, setLoading] = useState(true);
   const [isSidebarOpen, setIsSidebarOpen] = useState(true);
   const router = useRouter();
+  const pathname = usePathname();
 
   // ... (useEffect remains same)
 
@@ -54,6 +57,8 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
     { id: 'vehicles', label: 'ข้อมูลรถยนต์', icon: Car, path: '/vehicles', roles: ['Admin', 'Staff'] },
     { id: 'diagnostics', label: 'วินิจฉัยระบบ', icon: Activity, path: '/diagnostics', roles: ['Admin', 'Staff'] },
     { id: 'obd', label: 'OBD Integration', icon: Cpu, path: '/obd', roles: ['Admin', 'Staff'] },
+    { id: 'simulation', label: 'Simulation Layer', icon: Terminal, path: '/simulation', roles: ['Admin'] },
+    { id: 'marketplace', label: 'Marketplace', icon: ShoppingBag, path: '/marketplace', roles: ['Admin', 'Staff'] },
     { id: 'customizations', label: 'Device & Customization', icon: Settings, path: '/customizations', roles: ['Admin', 'Staff'] },
     { id: 'advisor', label: 'AI Advisor', icon: Bot, path: '/advisor', roles: ['Admin', 'Staff'] },
     { id: 'analytics', label: 'AI Analytics', icon: TrendingUp, path: '/analytics', roles: ['Admin'] },
@@ -98,12 +103,12 @@ export default function DashboardLayout({ children }: { children: React.ReactNod
               key={item.id}
               onClick={() => router.push(item.path)}
               className={`w-full flex items-center gap-3 px-3 py-3 rounded-xl transition-all group relative ${
-                router.pathname === item.path 
+                pathname === item.path 
                   ? 'bg-red-50 text-red-600 font-bold' 
                   : 'text-slate-500 hover:bg-slate-50 hover:text-slate-900'
               }`}
             >
-              <item.icon className={`w-5 h-5 ${router.pathname === item.path ? 'text-red-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
+              <item.icon className={`w-5 h-5 ${pathname === item.path ? 'text-red-600' : 'text-slate-400 group-hover:text-slate-600'}`} />
               {isSidebarOpen && <span>{item.label}</span>}
               {!isSidebarOpen && (
                 <div className="absolute left-full ml-2 px-2 py-1 bg-slate-900 text-white text-xs rounded opacity-0 group-hover:opacity-100 pointer-events-none whitespace-nowrap z-50">

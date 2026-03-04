@@ -162,6 +162,30 @@ export function initDb() {
       registered_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (vehicle_id) REFERENCES vehicles(id)
     );
+    CREATE TABLE IF NOT EXISTS firmware_updates (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      version TEXT,
+      file_path TEXT,
+      device_type TEXT,
+      release_notes TEXT,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS simulation_sessions (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      status TEXT,
+      config JSON,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP
+    );
+
+    CREATE TABLE IF NOT EXISTS branches (
+      id INTEGER PRIMARY KEY AUTOINCREMENT,
+      name TEXT,
+      location TEXT,
+      status TEXT,
+      last_sync DATETIME
+    );
   `);
 
   // Migrations for existing tables
@@ -169,6 +193,8 @@ export function initDb() {
   try { db.prepare("ALTER TABLE vehicles ADD COLUMN year INTEGER").run(); } catch (e) {}
   try { db.prepare("ALTER TABLE vehicles ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP").run(); } catch (e) {}
   try { db.prepare("ALTER TABLE service_history ADD COLUMN service_details TEXT").run(); } catch (e) {}
+  try { db.prepare("ALTER TABLE obd_devices ADD COLUMN firmware_version TEXT").run(); } catch (e) {}
+  try { db.prepare("ALTER TABLE obd_devices ADD COLUMN supported_protocols TEXT").run(); } catch (e) {}
 
   // Seed Roles
   const rolesCount = db.prepare('SELECT count(*) as count FROM roles').get() as { count: number };

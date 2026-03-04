@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { MessageSquare, Star, User, Plus, Quote } from 'lucide-react';
 import { motion } from 'motion/react';
@@ -29,7 +29,7 @@ export default function FeedbackPage() {
   const [rating, setRating] = useState(5);
   const [comment, setComment] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const [feedRes, custRes] = await Promise.all([
       fetch('/api/feedback'),
       fetch('/api/customers')
@@ -37,11 +37,11 @@ export default function FeedbackPage() {
     setFeedbacks(await feedRes.json());
     setCustomers(await custRes.json());
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -105,7 +105,7 @@ export default function FeedbackPage() {
                   </div>
                   <span className="text-xs font-bold text-slate-400">({item.rating}/5)</span>
                 </div>
-                <p className="text-slate-600 text-sm mb-6 relative z-10">"{item.comment}"</p>
+                <p className="text-slate-600 text-sm mb-6 relative z-10">&quot;{item.comment}&quot;</p>
                 <div className="flex items-center gap-3 border-t border-slate-50 pt-4">
                   <div className="w-8 h-8 bg-slate-100 rounded-full flex items-center justify-center text-slate-500">
                     <User className="w-4 h-4" />

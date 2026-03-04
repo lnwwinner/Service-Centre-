@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
 import { Calendar as CalendarIcon, Clock, User, Car, Plus, CheckCircle2, XCircle } from 'lucide-react';
@@ -43,7 +43,7 @@ export default function AppointmentsPage() {
   const [serviceType, setServiceType] = useState('');
   const [notes, setNotes] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const [apptRes, custRes, vehRes] = await Promise.all([
       fetch('/api/appointments'),
       fetch('/api/customers'),
@@ -54,11 +54,11 @@ export default function AppointmentsPage() {
     setCustomers(await custRes.json());
     setVehicles(await vehRes.json());
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const filteredVehicles = vehicles.filter(v => v.customer_id === parseInt(customerId));
 
@@ -167,7 +167,7 @@ export default function AppointmentsPage() {
           <div className="space-y-6">
             <div className="bg-blue-600 text-white p-6 rounded-[32px] shadow-lg shadow-blue-600/20 relative overflow-hidden">
               <div className="relative z-10">
-                <p className="text-blue-200 text-xs font-bold uppercase tracking-widest">Today's Appointments</p>
+                <p className="text-blue-200 text-xs font-bold uppercase tracking-widest">Today&apos;s Appointments</p>
                 <h3 className="text-4xl font-bold mt-2">{appointments.filter(a => new Date(a.appointment_date).toDateString() === new Date().toDateString()).length}</h3>
                 <div className="mt-4 flex gap-2">
                   <span className="bg-white/20 px-2 py-1 rounded-lg text-xs font-bold backdrop-blur-sm">3 Pending</span>

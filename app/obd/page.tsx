@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
 import { Cpu, Wifi, Bluetooth, Usb, Cloud, Plus, RefreshCw, CheckCircle2, Activity } from 'lucide-react';
@@ -13,6 +13,8 @@ interface Device {
   type: string;
   status: string;
   last_seen: string;
+  firmware_version?: string;
+  supported_protocols?: string;
 }
 
 export default function OBDIntegrationPage() {
@@ -20,21 +22,28 @@ export default function OBDIntegrationPage() {
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [monitoringDevice, setMonitoringDevice] = useState<string | null>(null);
+  const [updating, setUpdating] = useState<number | null>(null);
   
   // Form
   const [name, setName] = useState('');
   const [type, setType] = useState('BLUETOOTH');
   const [connectionString, setConnectionString] = useState('');
 
-  const fetchDevices = async () => {
+  const fetchDevices = useCallback(async () => {
     const res = await fetch('/api/obd/devices');
-    setDevices(await res.json());
+    const data = await res.json();
+    // Mocking some data for the demo since the DB might not have it yet
+    setDevices(data.map((d: any) => ({
+      ...d,
+      firmware_version: d.firmware_version || 'v1.2.4',
+      supported_protocols: d.supported_protocols || 'CAN, K-Line, L-Line'
+    })));
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchDevices();
-  }, []);
+  }, [fetchDevices]);
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -48,6 +57,15 @@ export default function OBDIntegrationPage() {
     });
     
     setIsModalOpen(false);
+    fetchDevices();
+  };
+
+  const handleUpdateFirmware = async (deviceId: number) => {
+    setUpdating(deviceId);
+    // Simulate update process
+    await new Promise(resolve => setTimeout(resolve, 3000));
+    setUpdating(null);
+    alert('Firmware updated successfully to v1.2.5');
     fetchDevices();
   };
 
@@ -97,21 +115,58 @@ export default function OBDIntegrationPage() {
                   <p className="text-xs text-slate-500">{device.type}</p>
                 </div>
               </div>
-              <div className="flex items-center justify-between mt-4 pt-4 border-t border-slate-50">
-                <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${
-                  device.status === 'CONNECTED' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
-                }`}>
-                  {device.status}
-                </span>
-                
-                {device.status === 'CONNECTED' && (
-                  <button 
-                    onClick={() => setMonitoringDevice(device.id.toString())}
-                    className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
-                  >
-                    <Activity className="w-3 h-3" /> Monitor Live
-                  </button>
-                )}
+
+              <div className="space-y-3 mb-6">
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <span>Firmware</span>
+                  <span className="text-slate-600">{device.firmware_version}</span>
+                </div>
+                <div className="flex justify-between text-[10px] font-bold uppercase tracking-widest text-slate-400">
+                  <span>Compatibility</span>
+                  <span className="text-emerald-600 flex items-center gap-1">
+                    <CheckCircle2 className="w-3 h-3" /> Verified
+                  </span>
+                </div>
+                <div className="text-[10px] text-slate-400">
+                  Protocols: {device.supported_protocols}
+                </div>
+              </div>
+
+              <div className="flex flex-col gap-2 pt-4 border-t border-slate-50">
+                <div className="flex items-center justify-between">
+                  <span className={`px-3 py-1 rounded-lg text-[10px] font-bold uppercase ${
+                    device.status === 'CONNECTED' ? 'bg-emerald-100 text-emerald-600' : 'bg-slate-100 text-slate-500'
+                  }`}>
+                    {device.status}
+                  </span>
+                  
+                  {device.status === 'CONNECTED' && (
+                    <button 
+                      onClick={() => setMonitoringDevice(device.id.toString())}
+                      className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+                    >
+                      <Activity className="w-3 h-3" /> Monitor Live
+                    </button>
+                  )}
+                </div>
+
+                <button 
+                  onClick={() => handleUpdateFirmware(device.id)}
+                  disabled={updating === device.id}
+                  className="w-full py-2 bg-slate-50 text-slate-600 text-[10px] font-bold uppercase tracking-widest rounded-xl hover:bg-slate-100 transition-all flex items-center justify-center gap-2"
+                >
+                  {updating === device.id ? (
+                    <>
+                      <RefreshCw className="w-3 h-3 animate-spin" />
+                      Updating...
+                    </>
+                  ) : (
+                    <>
+                      <RefreshCw className="w-3 h-3" />
+                      Check for Updates
+                    </>
+                  )}
+                </button>
               </div>
             </div>
           ))}

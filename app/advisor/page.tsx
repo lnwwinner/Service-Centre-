@@ -3,7 +3,21 @@
 import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, Car, History, Volume2, VolumeX, RefreshCw } from 'lucide-react';
+import { 
+  Send, 
+  Bot, 
+  User, 
+  Sparkles, 
+  Car, 
+  History, 
+  Volume2, 
+  VolumeX, 
+  RefreshCw,
+  Zap,
+  Radio,
+  ShieldCheck,
+  Activity
+} from 'lucide-react';
 import { GoogleGenAI, Modality } from "@google/genai";
 
 interface Message {
@@ -49,15 +63,15 @@ export default function AdvisorPage() {
         const model = ai.models.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
         const prompt = `
-          You are an expert automotive service advisor. 
+          You are an expert automotive service advisor specializing in Toyota vehicles, including EV and Hybrid models. 
           Analyze the following vehicle and service history data to provide proactive maintenance reminders.
           
           Vehicles: ${JSON.stringify(vehicles)}
           Service History: ${JSON.stringify(services)}
           
           Provide a concise, friendly summary of upcoming needs or potential risks. 
-          Focus on things like oil changes, brake inspections, or tire rotations based on the last service date and mileage.
-          If no data is available, just give general maintenance tips.
+          Focus on things like oil changes, brake inspections, tire rotations, and specific EV/Hybrid checks (battery health, inverter cooling).
+          If no data is available, just give general maintenance tips for Toyota owners.
           
           Keep it under 100 words.
         `;
@@ -79,13 +93,14 @@ export default function AdvisorPage() {
     runProactiveAnalysis();
   }, []);
 
-  const handleSend = async (e: React.FormEvent) => {
-    e.preventDefault();
-    if (!input.trim()) return;
+  const handleSend = async (e?: React.FormEvent, customInput?: string) => {
+    if (e) e.preventDefault();
+    const messageText = customInput || input;
+    if (!messageText.trim()) return;
 
-    const userMsg: Message = { role: 'user', text: input, timestamp: new Date() };
+    const userMsg: Message = { role: 'user', text: messageText, timestamp: new Date() };
     setMessages(prev => [...prev, userMsg]);
-    setInput('');
+    if (!customInput) setInput('');
     setLoading(true);
 
     try {
@@ -101,11 +116,12 @@ export default function AdvisorPage() {
           parts: [{ text: m.text }]
         })),
         generationConfig: {
-          maxOutputTokens: 500,
-        },
+          maxOutputTokens: 1000,
+          systemInstruction: "You are an AI Service Advisor for a high-end Toyota service center. You specialize in internal combustion engines, Hybrids (HEV/PHEV), and Battery Electric Vehicles (BEV). You can also perform 'Remote Diagnostics' by analyzing user-provided symptoms or OBD data. Be professional, technical yet accessible, and prioritize safety."
+        } as any,
       });
 
-      const result = await chat.sendMessage(input);
+      const result = await chat.sendMessage(messageText);
       const responseText = result.response.text;
 
       setMessages(prev => [...prev, { role: 'model', text: responseText || "I'm not sure how to answer that. Could you rephrase?", timestamp: new Date() }]);
@@ -158,6 +174,13 @@ export default function AdvisorPage() {
     }
   };
 
+  const quickActions = [
+    { label: 'EV/Hybrid Health', icon: Zap, color: 'text-emerald-600', bg: 'bg-emerald-50', prompt: 'Run a health check on my Hybrid battery and inverter system.' },
+    { label: 'Remote Diagnostic', icon: Radio, color: 'text-blue-600', bg: 'bg-blue-50', prompt: 'I have a strange noise coming from the front left wheel. Can you diagnose?' },
+    { label: 'Predictive Alert', icon: Activity, color: 'text-orange-600', bg: 'bg-orange-50', prompt: 'What maintenance is predicted for my vehicle in the next 3 months?' },
+    { label: 'Safety Check', icon: ShieldCheck, color: 'text-purple-600', bg: 'bg-purple-50', prompt: 'Perform a remote safety audit on all connected vehicle systems.' },
+  ];
+
   return (
     <DashboardLayout>
       <div className="h-[calc(100vh-140px)] flex flex-col bg-white rounded-[32px] border border-slate-200 shadow-sm overflow-hidden">
@@ -184,6 +207,22 @@ export default function AdvisorPage() {
 
         {/* Chat Area */}
         <div className="flex-1 overflow-y-auto p-6 space-y-6 bg-[#F8F9FA]">
+          {/* Quick Actions */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
+            {quickActions.map((action, i) => (
+              <button 
+                key={i}
+                onClick={() => handleSend(undefined, action.prompt)}
+                className="p-4 bg-white border border-slate-200 rounded-2xl hover:shadow-md transition-all text-left group"
+              >
+                <div className={`p-2 rounded-xl ${action.bg} ${action.color} w-fit mb-3 group-hover:scale-110 transition-transform`}>
+                  <action.icon className="w-4 h-4" />
+                </div>
+                <p className="text-xs font-bold text-slate-700">{action.label}</p>
+              </button>
+            ))}
+          </div>
+
           {messages.map((msg, idx) => (
             <motion.div 
               initial={{ opacity: 0, y: 10 }}

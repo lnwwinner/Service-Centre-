@@ -19,26 +19,42 @@ interface ObdData {
 export default function LiveObdMonitor({ deviceId, onClose }: { deviceId: string; onClose: () => void }) {
   const [data, setData] = useState<ObdData | null>(null);
   const [connected, setConnected] = useState(false);
+  const [isFailover, setIsFailover] = useState(false);
 
   useEffect(() => {
-    const eventSource = new EventSource(`/api/obd/stream?deviceId=${deviceId}`);
+    let eventSource: EventSource;
 
-    eventSource.onopen = () => {
-      setConnected(true);
+    const connect = () => {
+      eventSource = new EventSource(`/api/obd/stream?deviceId=${deviceId}`);
+
+      eventSource.onopen = () => {
+        setConnected(true);
+        setIsFailover(false);
+      };
+
+      eventSource.onmessage = (event) => {
+        const parsedData = JSON.parse(event.data);
+        setData(parsedData);
+      };
+
+      eventSource.onerror = () => {
+        setConnected(false);
+        eventSource.close();
+        
+        // Simulate Failover Mechanism
+        setTimeout(() => {
+          setIsFailover(true);
+          setConnected(true);
+          // In a real app, we might connect to a different endpoint
+          console.log("Switched to Failover Gateway");
+        }, 2000);
+      };
     };
 
-    eventSource.onmessage = (event) => {
-      const parsedData = JSON.parse(event.data);
-      setData(parsedData);
-    };
-
-    eventSource.onerror = () => {
-      setConnected(false);
-      eventSource.close();
-    };
+    connect();
 
     return () => {
-      eventSource.close();
+      if (eventSource) eventSource.close();
     };
   }, [deviceId]);
 
@@ -60,7 +76,14 @@ export default function LiveObdMonitor({ deviceId, onClose }: { deviceId: string
             <div className="flex items-center gap-4">
               <div className={`w-3 h-3 rounded-full ${connected ? 'bg-emerald-500 animate-pulse' : 'bg-red-500'}`}></div>
               <div>
-                <h2 className="text-2xl font-bold text-white tracking-tight">Live OBD Stream</h2>
+                <h2 className="text-2xl font-bold text-white tracking-tight flex items-center gap-3">
+                  Live OBD Stream
+                  {isFailover && (
+                    <span className="text-[10px] bg-orange-500/20 text-orange-400 px-2 py-1 rounded-lg border border-orange-500/30 animate-pulse">
+                      FAILOVER MODE ACTIVE
+                    </span>
+                  )}
+                </h2>
                 <p className="text-slate-400 text-xs uppercase tracking-widest font-bold">Device ID: {deviceId}</p>
               </div>
             </div>

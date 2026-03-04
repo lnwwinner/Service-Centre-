@@ -1,6 +1,6 @@
 'use client';
 
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
 import { ListOrdered, Car, User, Clock, CheckCircle2, PlayCircle, PauseCircle, Plus } from 'lucide-react';
@@ -33,7 +33,7 @@ export default function QueuePage() {
   const [bayId, setBayId] = useState('');
   const [technician, setTechnician] = useState('');
 
-  const fetchData = async () => {
+  const fetchData = useCallback(async () => {
     const [queueRes, vehRes] = await Promise.all([
       fetch('/api/queue'),
       fetch('/api/vehicles')
@@ -41,11 +41,11 @@ export default function QueuePage() {
     setQueue(await queueRes.json());
     setVehicles(await vehRes.json());
     setLoading(false);
-  };
+  }, []);
 
   useEffect(() => {
     fetchData();
-  }, []);
+  }, [fetchData]);
 
   const handleStatusChange = async (id: number, newStatus: string) => {
     const session = document.cookie.split('; ').find(row => row.startsWith('user_session='));

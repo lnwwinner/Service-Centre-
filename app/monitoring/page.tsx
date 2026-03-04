@@ -141,18 +141,57 @@ export default function MonitoringPage() {
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-8">
           {/* Performance Chart */}
-          <div className="lg:col-span-2 bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm">
-            <h3 className="font-bold text-lg mb-6">Resource Usage History</h3>
-            <div className="h-[300px] w-full">
-              <ResponsiveContainer width="100%" height="100%">
-                <LineChart data={chartData}>
-                  <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
-                  <XAxis dataKey="time" hide />
-                  <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
-                  <Line type="monotone" dataKey="cpu" stroke="#3B82F6" strokeWidth={3} dot={false} />
-                  <Line type="monotone" dataKey="memory" stroke="#A855F7" strokeWidth={3} dot={false} />
-                </LineChart>
-              </ResponsiveContainer>
+          <div className="lg:col-span-2 space-y-8">
+            <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-lg mb-6">Resource Usage History</h3>
+              <div className="h-[300px] w-full">
+                <ResponsiveContainer width="100%" height="100%">
+                  <LineChart data={chartData}>
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} stroke="#F1F5F9" />
+                    <XAxis dataKey="time" hide />
+                    <YAxis domain={[0, 100]} axisLine={false} tickLine={false} tick={{fill: '#94A3B8', fontSize: 12}} />
+                    <Line type="monotone" dataKey="cpu" stroke="#3B82F6" strokeWidth={3} dot={false} />
+                    <Line type="monotone" dataKey="memory" stroke="#A855F7" strokeWidth={3} dot={false} />
+                  </LineChart>
+                </ResponsiveContainer>
+              </div>
+            </div>
+
+            <div className="bg-white p-8 rounded-[32px] border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-lg mb-6 flex items-center gap-2">
+                <Database className="w-5 h-5 text-indigo-500" />
+                Immutable Audit Trail (Global Sync)
+              </h3>
+              <div className="overflow-x-auto">
+                <table className="w-full text-left text-sm">
+                  <thead>
+                    <tr className="border-b border-slate-100">
+                      <th className="pb-4 font-bold text-slate-400 uppercase tracking-widest text-[10px]">Timestamp</th>
+                      <th className="pb-4 font-bold text-slate-400 uppercase tracking-widest text-[10px]">Action</th>
+                      <th className="pb-4 font-bold text-slate-400 uppercase tracking-widest text-[10px]">Branch</th>
+                      <th className="pb-4 font-bold text-slate-400 uppercase tracking-widest text-[10px]">Status</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {[
+                      { time: '2024-03-04 15:30:12', action: 'OBD_DATA_SYNC', branch: 'Bangkok-01', status: 'VERIFIED' },
+                      { time: '2024-03-04 15:28:45', action: 'FIRMWARE_PUSH', branch: 'ChiangMai-02', status: 'COMPLETED' },
+                      { time: '2024-03-04 15:25:00', action: 'USER_AUTH_LOG', branch: 'Phuket-01', status: 'SIGNED' },
+                    ].map((log, i) => (
+                      <tr key={i} className="border-b border-slate-50 last:border-0">
+                        <td className="py-4 font-mono text-[11px] text-slate-500">{log.time}</td>
+                        <td className="py-4 font-bold text-slate-700">{log.action}</td>
+                        <td className="py-4 text-slate-600">{log.branch}</td>
+                        <td className="py-4">
+                          <span className="px-2 py-1 bg-emerald-50 text-emerald-600 rounded-lg text-[10px] font-bold">
+                            {log.status}
+                          </span>
+                        </td>
+                      </tr>
+                    ))}
+                  </tbody>
+                </table>
+              </div>
             </div>
           </div>
 
@@ -167,6 +206,28 @@ export default function MonitoringPage() {
                 System Status: {metrics.status}
               </h3>
               <p className="text-sm opacity-80">All services operational. Gate layer active.</p>
+            </div>
+
+            <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm">
+              <h3 className="font-bold text-lg mb-4 flex items-center gap-2">
+                <Server className="w-5 h-5 text-blue-500" />
+                Branch Connectivity
+              </h3>
+              <div className="space-y-4">
+                {[
+                  { name: 'Bangkok Central', status: 'ONLINE', latency: '12ms' },
+                  { name: 'Chiang Mai North', status: 'ONLINE', latency: '45ms' },
+                  { name: 'Phuket South', status: 'OFFLINE', latency: '-' },
+                ].map((branch, i) => (
+                  <div key={i} className="flex items-center justify-between p-3 bg-slate-50 rounded-2xl">
+                    <div>
+                      <p className="text-sm font-bold text-slate-700">{branch.name}</p>
+                      <p className="text-[10px] text-slate-400">Latency: {branch.latency}</p>
+                    </div>
+                    <div className={`w-2 h-2 rounded-full ${branch.status === 'ONLINE' ? 'bg-emerald-500' : 'bg-red-500'}`}></div>
+                  </div>
+                ))}
+              </div>
             </div>
 
             <div className="bg-white p-6 rounded-[32px] border border-slate-200 shadow-sm h-full max-h-[300px] overflow-y-auto">
