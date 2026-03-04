@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
-import { Activity, Zap, AlertTriangle, CheckCircle, Search, FileText, Cpu } from 'lucide-react';
+import { Activity, Zap, AlertTriangle, CheckCircle, Search, FileText, Cpu, Shield } from 'lucide-react';
 
 interface Vehicle {
   id: number;
@@ -112,6 +112,34 @@ export default function DiagnosticsPage() {
                   className="w-full py-3 bg-slate-50 hover:bg-yellow-50 hover:text-yellow-600 rounded-xl text-sm font-bold text-slate-600 transition-all flex items-center justify-between px-4"
                 >
                   <span className="flex items-center gap-2"><Zap className="w-4 h-4" /> Electrical</span>
+                </button>
+                <button 
+                  onClick={() => runScan('Brake')}
+                  disabled={scanning}
+                  className="w-full py-3 bg-slate-50 hover:bg-slate-200 hover:text-slate-800 rounded-xl text-sm font-bold text-slate-600 transition-all flex items-center justify-between px-4"
+                >
+                  <span className="flex items-center gap-2"><AlertTriangle className="w-4 h-4" /> Brake & ABS</span>
+                </button>
+                <button 
+                  onClick={() => runScan('Suspension')}
+                  disabled={scanning}
+                  className="w-full py-3 bg-slate-50 hover:bg-slate-200 hover:text-slate-800 rounded-xl text-sm font-bold text-slate-600 transition-all flex items-center justify-between px-4"
+                >
+                  <span className="flex items-center gap-2"><Activity className="w-4 h-4" /> Suspension</span>
+                </button>
+                <button 
+                  onClick={() => runScan('Exhaust')}
+                  disabled={scanning}
+                  className="w-full py-3 bg-slate-50 hover:bg-slate-200 hover:text-slate-800 rounded-xl text-sm font-bold text-slate-600 transition-all flex items-center justify-between px-4"
+                >
+                  <span className="flex items-center gap-2"><Cpu className="w-4 h-4" /> Exhaust & Emission</span>
+                </button>
+                <button 
+                  onClick={() => runScan('Safety')}
+                  disabled={scanning}
+                  className="w-full py-3 bg-slate-50 hover:bg-slate-200 hover:text-slate-800 rounded-xl text-sm font-bold text-slate-600 transition-all flex items-center justify-between px-4"
+                >
+                  <span className="flex items-center gap-2"><Shield className="w-4 h-4" /> Safety Systems</span>
                 </button>
               </div>
             )}

@@ -19,15 +19,15 @@ export async function GET() {
 
 export async function POST(request: Request) {
   try {
-    const { customer_id, vehicle_id, date, time, service_type, notes, userId } = await request.json();
+    const { customer_id, vehicle_id, service_type, appointment_date, notes, userId } = await request.json();
     
     const result = db.prepare(`
-      INSERT INTO appointments (customer_id, vehicle_id, appointment_date, time_slot, service_type, notes, status)
-      VALUES (?, ?, ?, ?, ?, ?, 'PENDING')
-    `).run(customer_id, vehicle_id, date, time, service_type, notes);
+      INSERT INTO appointments (customer_id, vehicle_id, service_type, appointment_date, notes, status)
+      VALUES (?, ?, ?, ?, ?, 'SCHEDULED')
+    `).run(customer_id, vehicle_id, service_type, appointment_date, notes);
     
     if (userId) {
-      await logAction(userId, 'CREATE_APPOINTMENT', `Created appointment for vehicle ID: ${vehicle_id}`);
+      await logAction(userId, 'CREATE_APPOINTMENT', `Created appointment for vehicle ${vehicle_id}`);
     }
     
     return NextResponse.json({ id: result.lastInsertRowid });
