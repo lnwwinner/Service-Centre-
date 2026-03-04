@@ -34,17 +34,35 @@ export default function VehiclesPage() {
   const [customerId, setCustomerId] = useState('');
 
   const fetchData = async () => {
-    const [vehiclesRes, customersRes] = await Promise.all([
-      fetch('/api/vehicles'),
-      fetch('/api/customers')
-    ]);
-    
-    const vehiclesData = await vehiclesRes.json();
-    const customersData = await customersRes.json();
-    
-    setVehicles(vehiclesData);
-    setCustomers(customersData);
-    setLoading(false);
+    try {
+      const [vehiclesRes, customersRes] = await Promise.all([
+        fetch('/api/vehicles'),
+        fetch('/api/customers')
+      ]);
+      
+      const vehiclesData = await vehiclesRes.json();
+      const customersData = await customersRes.json();
+      
+      if (Array.isArray(vehiclesData)) {
+        setVehicles(vehiclesData);
+      } else {
+        console.error('Vehicles API returned non-array:', vehiclesData);
+        setVehicles([]);
+      }
+
+      if (Array.isArray(customersData)) {
+        setCustomers(customersData);
+      } else {
+        console.error('Customers API returned non-array:', customersData);
+        setCustomers([]);
+      }
+    } catch (error) {
+      console.error('Failed to fetch data:', error);
+      setVehicles([]);
+      setCustomers([]);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
@@ -236,14 +254,34 @@ export default function VehiclesPage() {
 
               <div className="space-y-2">
                 <label className="text-xs font-bold uppercase tracking-widest text-slate-500 ml-1">เลขตัวถัง (VIN)</label>
-                <input 
-                  type="text" 
-                  value={vin}
-                  onChange={(e) => setVin(e.target.value)}
-                  className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-slate-500/20"
-                  placeholder="MR053..."
-                  required
-                />
+                <div className="flex gap-2">
+                  <input 
+                    type="text" 
+                    value={vin}
+                    onChange={(e) => setVin(e.target.value)}
+                    className="w-full bg-slate-50 border border-slate-200 rounded-2xl py-3 px-4 outline-none focus:ring-2 focus:ring-slate-500/20"
+                    placeholder="MR053..."
+                    required
+                  />
+                  <button
+                    type="button"
+                    onClick={async () => {
+                      if (!vin) return;
+                      try {
+                        const res = await fetch(`/api/vin-lookup?vin=${vin}`);
+                        if (!res.ok) throw new Error('Lookup failed');
+                        const data = await res.json();
+                        setModel(`${data.make} ${data.model}`);
+                        setYear(data.year);
+                      } catch (error) {
+                        alert('Failed to lookup VIN');
+                      }
+                    }}
+                    className="bg-blue-600 text-white px-4 rounded-2xl font-bold text-xs hover:bg-blue-700 transition-all"
+                  >
+                    Lookup
+                  </button>
+                </div>
               </div>
 
               <div className="flex gap-4 pt-4">

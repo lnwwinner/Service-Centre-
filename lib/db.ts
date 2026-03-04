@@ -33,7 +33,10 @@ export function initDb() {
       id INTEGER PRIMARY KEY AUTOINCREMENT,
       vin TEXT UNIQUE,
       license_plate TEXT,
+      model TEXT,
+      year INTEGER,
       customer_id INTEGER,
+      created_at DATETIME DEFAULT CURRENT_TIMESTAMP,
       FOREIGN KEY (customer_id) REFERENCES customers(id)
     );
 
@@ -160,6 +163,11 @@ export function initDb() {
     );
   `);
 
+  // Migrations for existing tables
+  try { db.prepare("ALTER TABLE vehicles ADD COLUMN model TEXT").run(); } catch (e) {}
+  try { db.prepare("ALTER TABLE vehicles ADD COLUMN year INTEGER").run(); } catch (e) {}
+  try { db.prepare("ALTER TABLE vehicles ADD COLUMN created_at DATETIME DEFAULT CURRENT_TIMESTAMP").run(); } catch (e) {}
+
   // Seed Roles
   const rolesCount = db.prepare('SELECT count(*) as count FROM roles').get() as { count: number };
   if (rolesCount.count === 0) {
@@ -176,5 +184,8 @@ export function initDb() {
     db.prepare('INSERT INTO users (username, password, role_id) VALUES (?, ?, ?)').run('auditor', 'password123', 3);
   }
 }
+
+// Initialize on load
+initDb();
 
 export default db;
