@@ -3,22 +3,25 @@
 import { useState, useEffect, useRef } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
-import { Send, Bot, User, Sparkles, Car, History } from 'lucide-react';
-import { GoogleGenAI } from "@google/genai";
+import { Send, Bot, User, Sparkles, Car, History, Volume2, VolumeX, RefreshCw } from 'lucide-react';
+import { GoogleGenAI, Modality } from "@google/genai";
 
 interface Message {
   role: 'user' | 'model';
   text: string;
   timestamp: Date;
+  audioUrl?: string;
 }
 
 export default function AdvisorPage() {
   const [messages, setMessages] = useState<Message[]>([
-    { role: 'model', text: 'Hello! I am your AI Service Advisor. How can I assist you with your vehicle today?', timestamp: new Date() }
+    { role: 'model', text: 'Hello! I am your AI Service Advisor. I am analyzing your vehicle data for proactive maintenance...', timestamp: new Date() }
   ]);
   const [input, setInput] = useState('');
   const [loading, setLoading] = useState(false);
+  const [isSpeaking, setIsSpeaking] = useState<number | null>(null);
   const messagesEndRef = useRef<HTMLDivElement>(null);
+  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   const scrollToBottom = () => {
     messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
@@ -27,6 +30,54 @@ export default function AdvisorPage() {
   useEffect(() => {
     scrollToBottom();
   }, [messages]);
+
+  // Proactive Analysis on Load
+  useEffect(() => {
+    const runProactiveAnalysis = async () => {
+      try {
+        const [vRes, sRes] = await Promise.all([
+          fetch('/api/vehicles'),
+          fetch('/api/services')
+        ]);
+        const vehicles = await vRes.json();
+        const services = await sRes.json();
+
+        const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+        if (!apiKey) throw new Error("API Key not found");
+
+        const ai = new GoogleGenAI({ apiKey });
+        const model = ai.models.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
+
+        const prompt = `
+          You are an expert automotive service advisor. 
+          Analyze the following vehicle and service history data to provide proactive maintenance reminders.
+          
+          Vehicles: ${JSON.stringify(vehicles)}
+          Service History: ${JSON.stringify(services)}
+          
+          Provide a concise, friendly summary of upcoming needs or potential risks. 
+          Focus on things like oil changes, brake inspections, or tire rotations based on the last service date and mileage.
+          If no data is available, just give general maintenance tips.
+          
+          Keep it under 100 words.
+        `;
+
+        const result = await model.generateContent(prompt);
+        const responseText = result.response.text;
+
+        setMessages([{ 
+          role: 'model', 
+          text: responseText || "I've analyzed your data. You're all set for now, but don't forget to check your tire pressure!", 
+          timestamp: new Date() 
+        }]);
+      } catch (error) {
+        console.error("Proactive Analysis Error:", error);
+        setMessages([{ role: 'model', text: "Hello! I'm ready to help. How can I assist you with your vehicle today?", timestamp: new Date() }]);
+      }
+    };
+
+    runProactiveAnalysis();
+  }, []);
 
   const handleSend = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -42,7 +93,7 @@ export default function AdvisorPage() {
       if (!apiKey) throw new Error("API Key not found");
 
       const ai = new GoogleGenAI({ apiKey });
-      const model = ai.models.getGenerativeModel({ model: "gemini-2.5-flash" });
+      const model = ai.models.getGenerativeModel({ model: "gemini-3.1-pro-preview" });
 
       const chat = model.startChat({
         history: messages.map(m => ({
@@ -55,14 +106,55 @@ export default function AdvisorPage() {
       });
 
       const result = await chat.sendMessage(input);
-      const responseText = result.response.text();
+      const responseText = result.response.text;
 
-      setMessages(prev => [...prev, { role: 'model', text: responseText, timestamp: new Date() }]);
+      setMessages(prev => [...prev, { role: 'model', text: responseText || "I'm not sure how to answer that. Could you rephrase?", timestamp: new Date() }]);
     } catch (error) {
       console.error("Chat Error:", error);
       setMessages(prev => [...prev, { role: 'model', text: "I'm having trouble connecting to the service network. Please try again.", timestamp: new Date() }]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const speakMessage = async (text: string, index: number) => {
+    if (isSpeaking === index) {
+      audioRef.current?.pause();
+      setIsSpeaking(null);
+      return;
+    }
+
+    setIsSpeaking(index);
+    try {
+      const apiKey = process.env.NEXT_PUBLIC_GEMINI_API_KEY;
+      if (!apiKey) throw new Error("API Key not found");
+
+      const ai = new GoogleGenAI({ apiKey });
+      const response = await ai.models.generateContent({
+        model: "gemini-2.5-flash-preview-tts",
+        contents: [{ parts: [{ text }] }],
+        config: {
+          responseModalities: [Modality.AUDIO],
+          speechConfig: {
+            voiceConfig: {
+              prebuiltVoiceConfig: { voiceName: 'Kore' },
+            },
+          },
+        },
+      });
+
+      const base64Audio = response.candidates?.[0]?.content?.parts?.[0]?.inlineData?.data;
+      if (base64Audio) {
+        const audioUrl = `data:audio/wav;base64,${base64Audio}`;
+        if (audioRef.current) {
+          audioRef.current.src = audioUrl;
+          audioRef.current.play();
+          audioRef.current.onended = () => setIsSpeaking(null);
+        }
+      }
+    } catch (error) {
+      console.error("TTS Error:", error);
+      setIsSpeaking(null);
     }
   };
 
@@ -104,15 +196,25 @@ export default function AdvisorPage() {
               }`}>
                 {msg.role === 'user' ? <User className="w-5 h-5" /> : <Sparkles className="w-5 h-5" />}
               </div>
-              <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm ${
+              <div className={`max-w-[80%] p-4 rounded-2xl text-sm leading-relaxed shadow-sm relative group ${
                 msg.role === 'user' 
                   ? 'bg-white text-slate-800 rounded-tr-none' 
                   : 'bg-indigo-50 text-indigo-900 rounded-tl-none border border-indigo-100'
               }`}>
                 {msg.text}
-                <p className={`text-[10px] mt-2 opacity-50 ${msg.role === 'user' ? 'text-right' : 'text-left'}`}>
-                  {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                </p>
+                <div className="flex items-center justify-between mt-2">
+                  <p className="text-[10px] opacity-50">
+                    {msg.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
+                  </p>
+                  {msg.role === 'model' && (
+                    <button 
+                      onClick={() => speakMessage(msg.text, idx)}
+                      className="p-1 hover:bg-indigo-100 rounded-lg transition-colors text-indigo-600"
+                    >
+                      {isSpeaking === idx ? <VolumeX className="w-3 h-3" /> : <Volume2 className="w-3 h-3" />}
+                    </button>
+                  )}
+                </div>
               </div>
             </motion.div>
           ))}
@@ -151,6 +253,8 @@ export default function AdvisorPage() {
           </form>
         </div>
       </div>
+      <audio ref={audioRef} className="hidden" />
     </DashboardLayout>
   );
 }
+

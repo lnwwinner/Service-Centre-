@@ -3,8 +3,9 @@
 import { useState, useEffect } from 'react';
 import DashboardLayout from '@/components/DashboardLayout';
 import { motion } from 'motion/react';
-import { Cpu, Wifi, Bluetooth, Usb, Cloud, Plus, RefreshCw, CheckCircle2 } from 'lucide-react';
+import { Cpu, Wifi, Bluetooth, Usb, Cloud, Plus, RefreshCw, CheckCircle2, Activity } from 'lucide-react';
 import AiDeviceOptimizer from '@/components/AiDeviceOptimizer';
+import LiveObdMonitor from '@/components/LiveObdMonitor';
 
 interface Device {
   id: number;
@@ -18,6 +19,7 @@ export default function OBDIntegrationPage() {
   const [devices, setDevices] = useState<Device[]>([]);
   const [loading, setLoading] = useState(true);
   const [isModalOpen, setIsModalOpen] = useState(false);
+  const [monitoringDevice, setMonitoringDevice] = useState<string | null>(null);
   
   // Form
   const [name, setName] = useState('');
@@ -101,14 +103,27 @@ export default function OBDIntegrationPage() {
                 }`}>
                   {device.status}
                 </span>
-                <span className="text-xs text-slate-400">
-                  Last seen: {new Date(device.last_seen).toLocaleTimeString()}
-                </span>
+                
+                {device.status === 'CONNECTED' && (
+                  <button 
+                    onClick={() => setMonitoringDevice(device.id.toString())}
+                    className="flex items-center gap-1 text-xs font-bold text-blue-600 hover:text-blue-700"
+                  >
+                    <Activity className="w-3 h-3" /> Monitor Live
+                  </button>
+                )}
               </div>
             </div>
           ))}
         </div>
       </div>
+
+      {monitoringDevice && (
+        <LiveObdMonitor 
+          deviceId={monitoringDevice} 
+          onClose={() => setMonitoringDevice(null)} 
+        />
+      )}
 
       {/* Register Modal */}
       {isModalOpen && (
